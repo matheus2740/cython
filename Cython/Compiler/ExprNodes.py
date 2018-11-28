@@ -671,6 +671,8 @@ class ExprNode(Node):
             self.gil_error()
 
     def gil_assignment_check(self, env):
+        if self.type == PyrexTypes.PyExtensionType and env.nogil and self.type.nogil:
+            error("No gil type in no gil function")
         if env.nogil and self.type.is_pyobject:
             error(self.pos, "Assignment of Python object not allowed without gil")
 
@@ -1656,6 +1658,9 @@ class StringNode(PyConstNode):
     is_identifier = None
     unicode_value = None
 
+    # XXX: Let the StringNode can be used in nogil extension initializing
+    nogil_check = None
+
     def calculate_constant_result(self):
         if self.unicode_value is not None:
             # only the Unicode value is portable across Py2/3
@@ -2249,6 +2254,9 @@ class NameNode(AtomicExprNode):
                         code.error_goto_if_null(self.result(), self.pos)))
             code.put_gotref(self.py_result())
 
+        elif entry.is_local and isinstance(entry.type, PyrexTypes.CythonExtensionType):
+            pass
+            # code.putln(entry.cname)
         elif entry.is_local or entry.in_closure or entry.from_closure or entry.type.is_memoryviewslice:
             # Raise UnboundLocalError for objects and memoryviewslices
             raise_unbound = (
@@ -5442,6 +5450,18 @@ class CallNode(ExprNode):
             self.analyse_c_function_call(env)
             self.type = type
             return True
+        elif type and type.is_struct and type.nogil:
+            args, kwds = self.explicit_args_kwds()
+            items = []
+            for arg, member in zip(args, type.scope.var_entries):
+                items.append(DictItemNode(pos=arg.pos, key=StringNode(pos=arg.pos, value=member.name), value=arg))
+            if kwds:
+                items += kwds.key_value_pairs
+            self.key_value_pairs = items
+            self.__class__ = DictNode
+            self.analyse_types(env)    # FIXME
+            self.coerce_to(type, env)
+            return True
 
     def is_lvalue(self):
         return self.type.is_reference
@@ -7157,9 +7177,12 @@ class AttributeNode(ExprNode):
                     # (AnalyseExpressionsTransform)
                     self.member = self.entry.cname
 
-                return "((struct %s *)%s%s%s)->%s" % (
-                    obj.type.vtabstruct_cname, obj_code, self.op,
-                    obj.type.vtabslot_cname, self.member)
+                if obj.type.nogil:
+                    return "%s" % self.entry.func_cname
+                else:
+                    return "((struct %s *)%s%s%s)->%s" % (
+                        obj.type.vtabstruct_cname, obj_code, self.op,
+                        obj.type.vtabslot_cname, self.member)
             elif self.result_is_used:
                 return self.member
             # Generating no code at all for unused access to optimised builtin
@@ -8810,6 +8833,11 @@ class DictNode(ExprNode):
                     code.putln('}')
                 if self.exclude_null_values:
                     code.putln('}')
+            elif self.type.nogil:
+                code.putln("%s->%s = %s;" % (
+                        self.result(),
+                        item.key.value,
+                        item.value.result()))
             else:
                 code.putln("%s.%s = %s;" % (
                         self.result(),
