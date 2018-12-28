@@ -1977,6 +1977,8 @@ class CCodeWriter(object):
             elif type.is_memoryviewslice:
                 from . import MemoryView
                 self.putln("%s = %s;" % (decl, MemoryView.memslice_entry_init))
+            elif type.is_struct and type.is_extension_type and type.nogil:
+                self.putln("%s;" % decl)
             else:
                 self.putln("%s%s;" % (static and "static " or "", decl))
 

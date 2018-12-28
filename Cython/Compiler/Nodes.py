@@ -5827,6 +5827,8 @@ class DelStatNode(StatNode):
                     error(arg.pos, "Deletion of global C variable")
             elif arg.type.is_ptr and arg.type.base_type.is_cpp_class:
                 self.cpp_check(env)
+            elif arg.type.is_struct_or_union and arg.type.nogil:
+                pass # del nogil extension
             elif arg.type.is_cpp_class:
                 error(arg.pos, "Deletion of non-heap C++ object")
             elif arg.is_subscript and arg.base.type is Builtin.bytearray_type:
@@ -5855,6 +5857,8 @@ class DelStatNode(StatNode):
                 arg.generate_evaluation_code(code)
                 code.putln("delete %s;" % arg.result())
                 arg.generate_disposal_code(code)
+            elif arg.type.is_struct_or_union and hasattr(arg.type, "nogil") and arg.type.nogil:
+                code.putln("free(&%s);" % arg.result())
             # else error reported earlier
 
     def annotate(self, code):

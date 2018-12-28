@@ -2223,7 +2223,8 @@ class CClassScope(ClassScope):
                           cname=None, visibility='private', api=0, in_pxd=0,
                           defining=0, modifiers=(), utility_code=None, overridable=False):
         if get_special_method_signature(name) and not self.parent_type.is_builtin_type:
-            error(pos, "Special methods must be declared with 'def', not 'cdef'")
+            if not(hasattr(self.parent_type, "nogil") and self.parent_type.nogil and self.parent_type.is_struct_or_union):
+                error(pos, "Special methods must be declared with 'def', not 'cdef'")
         args = type.args
         if not type.is_static_method:
             if not args:
