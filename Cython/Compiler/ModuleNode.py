@@ -1117,11 +1117,13 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
                     Naming.obj_base_cname))
         elif nogil:
             # Extension type with nogil keyword indicate it is a CPython-free struct
+            code.globalstate.use_utility_code(
+                UtilityCode.load_cached("CythonReferenceCounting", "ObjectHandling.c"))
             code.putln(
                 "// nogil"
             )
             code.putln(
-                "size_t ob_refcnt;"
+                "int ob_refcnt;" # "CyObject_HEAD;" Sometimes the CythonReferenceCounting was put after the nogil extension declaration, WTF!!!
             )
         else:
             code.putln(

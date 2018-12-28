@@ -8775,7 +8775,10 @@ class DictNode(ExprNode):
         #  Custom method used here because key-value
         #  pairs are evaluated and used one at a time.
         code.mark_pos(self.pos)
+
         self.allocate_temp_result(code)
+        if hasattr(self.type, 'nogil') and self.type.nogil:
+            code.putln("%s = (struct %s *)malloc(sizeof(struct %s));" % (self.result(), self.type.objstruct_cname, self.type.objstruct_cname))
 
         is_dict = self.type.is_pyobject
         if is_dict:

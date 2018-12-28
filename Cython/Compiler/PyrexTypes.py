@@ -1363,9 +1363,6 @@ class CythonExtensionType(CythonObjectType):
                 entity_code = "*%s" % entity_code
         return self.base_declaration_code(base_code, entity_code)
 
-    def literal_code(self, value):
-        return '(struct %s *)malloc(sizeof(struct %s))' % (self.objstruct_cname, self.objstruct_cname)
-
     def type_test_code(self, py_arg, notnone=False):
 
         none_check = "((%s) == Py_None)" % py_arg
