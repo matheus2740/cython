@@ -3,7 +3,6 @@ import subprocess
 import importlib
 import sys
 import build_extension
-from contextlib import redirect_stdout
 
 def run(env):
   # build the extension
