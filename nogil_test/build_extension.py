@@ -3,7 +3,8 @@ import importlib
 import sys
 
 def build_ext(env):
-  subprocess.check_output(['python3', 'setup.py', 'build_ext', '--inplace'], cwd='./cython_lwan_coro/', env=env)
+  # Build the cython_lwan_coro when installing it in slapos
+  # subprocess.check_output(['python3', 'setup.py', 'build_ext', '--inplace'], cwd='./cython_lwan_coro/', env=env)
   source = ''
   failure_count = 0
   try:

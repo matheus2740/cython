@@ -3,7 +3,8 @@ import importlib
 import json
 
 def run(env):
-  subprocess.call(['python3', 'nogil_extension.py', 'build_ext', '--inplace'], env=env)
+  # Build the extension when installing the Cython in slapos
+  # subprocess.call(['python3', 'nogil_extension.py', 'build_ext', '--inplace'], env=env)
   source = ''
   failure_count = 0
   try:
