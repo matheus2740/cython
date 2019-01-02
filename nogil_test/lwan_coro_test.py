@@ -13,7 +13,9 @@ def run(env, python_path):
           shell=True,
           )
   failure_count = 0
-  if len(source) != 30:
+  expected_result = b'2\n' * 5 + b'3\n' * 5 + b'4\n' * 5
+  if source != expected_result:
     failure_count = 1
+  
   result_dict = {'failed': failure_count, 'stdout': source}
   return result_dict
