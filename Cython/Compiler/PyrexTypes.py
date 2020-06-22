@@ -1340,6 +1340,7 @@ class CythonObjectType(PyrexType):
     is_extern = False
     is_subclassed = False
     is_gc_simple = False
+    builtin_trashcan = False
 
     def __str__(self):
         return "Cython object"

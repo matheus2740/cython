@@ -117,3 +117,5 @@ cpdef baz2():
 
 def bag():
     return str(baz1()) + '\n' + str(baz2())
+
+
