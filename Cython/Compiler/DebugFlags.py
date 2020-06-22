@@ -6,10 +6,10 @@ debug_coercion = 0
 
 # Write comments into the C code that show where temporary variables
 # are allocated and released.
-debug_temp_code_comments = 0
+debug_temp_code_comments = 1
 
 # Write a call trace of the code generation phase into the C code.
-debug_trace_code_generation = 0
+debug_trace_code_generation = 1
 
 # Do not replace exceptions with user-friendly error messages.
 debug_no_exception_intercept = 0

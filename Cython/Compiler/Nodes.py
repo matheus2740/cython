@@ -3396,6 +3396,8 @@ class DefNodeWrapper(FuncDefNode):
         # different code types.
         for arg in self.args:
             if not arg.type.is_pyobject:
+                if arg.type is PyrexTypes.PyExtensionType and arg.type.nogil:
+                    continue # XXX maybe here is not the correct place to put it...
                 if not arg.type.create_from_py_utility_code(env):
                     pass  # will fail later
             elif arg.hdr_type and not arg.hdr_type.is_pyobject:
@@ -4926,6 +4928,7 @@ class CClassDefNode(ClassDefNode):
     #  doc                string or None
     #  body               StatNode or None
     #  entry              Symtab.Entry
+    #  nogil              boolean
     #  base_type          PyExtensionType or None
     #  buffer_defaults_node DictNode or None Declares defaults for a buffer
     #  buffer_defaults_pos
@@ -4935,6 +4938,7 @@ class CClassDefNode(ClassDefNode):
     buffer_defaults_pos = None
     typedef_flag = False
     api = False
+    nogil = False
     objstruct_name = None
     typeobj_name = None
     check_size = None
@@ -4979,6 +4983,7 @@ class CClassDefNode(ClassDefNode):
             typedef_flag=self.typedef_flag,
             check_size = self.check_size,
             api=self.api,
+            nogil=self.nogil,
             buffer_defaults=self.buffer_defaults(env),
             shadow=self.shadow)
 
@@ -5067,6 +5072,7 @@ class CClassDefNode(ClassDefNode):
             visibility=self.visibility,
             typedef_flag=self.typedef_flag,
             api=self.api,
+            nogil=self.nogil,
             buffer_defaults=self.buffer_defaults(env),
             shadow=self.shadow)
 
@@ -6210,6 +6216,8 @@ class DelStatNode(StatNode):
                     error(arg.pos, "Deletion of global C variable")
             elif arg.type.is_ptr and arg.type.base_type.is_cpp_class:
                 self.cpp_check(env)
+            elif arg.type.is_struct_or_union and arg.type.nogil:
+                pass # del nogil extension
             elif arg.type.is_cpp_class:
                 error(arg.pos, "Deletion of non-heap C++ object")
             elif arg.is_subscript and arg.base.type is Builtin.bytearray_type:
@@ -6238,6 +6246,8 @@ class DelStatNode(StatNode):
                 arg.generate_evaluation_code(code)
                 code.putln("delete %s;" % arg.result())
                 arg.generate_disposal_code(code)
+            elif arg.type.is_struct_or_union and hasattr(arg.type, "nogil") and arg.type.nogil:
+                code.putln("free(&%s);" % arg.result())
             # else error reported earlier
 
     def annotate(self, code):
